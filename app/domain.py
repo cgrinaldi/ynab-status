@@ -1,5 +1,3 @@
-from typing import Sequence, Mapping
-import re
 from loguru import logger
 from app.ynab_client import Category
 
