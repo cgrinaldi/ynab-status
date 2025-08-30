@@ -1,7 +1,7 @@
 from loguru import logger
 from datetime import date
 from decimal import Decimal, ROUND_FLOOR
-from typing import TypedDict
+from typing import TypedDict, Optional
 from app.ynab_client import Category
 from app.helpers import mu_to_decimal
 
@@ -70,10 +70,70 @@ def days_and_weeks_remaining(today: date) -> tuple[int, Decimal]:
     return days_remaining, weeks_remaining
 
 
+def elapsed_fraction(today: date) -> Decimal:
+    from calendar import monthrange
+    days_in_month = monthrange(today.year, today.month)[1]
+    # Inclusive of today
+    return (Decimal(today.day) / Decimal(days_in_month)).quantize(Decimal("0.0001"))
+
+
+class PacingResult(TypedDict):
+    target_spent: Decimal
+    delta_amount: Decimal  # spent - target
+    delta_pct: Optional[Decimal]  # (spent - target) / target; None if target == 0
+    status: str  # "slow_down" | "could_spend_more" | "on_track" | "none"
+    icon: str  # "🐢" | "🐇" | "🎯" | "—"
+
+
+def compute_pacing(
+    budgeted: Decimal,
+    activity: Decimal,  # YNAB activity, typically negative for outflows
+    elapsed: Decimal,
+    upper_over_pct: Decimal,  # e.g., Decimal("0.10")
+    lower_under_pct: Decimal,  # e.g., Decimal("0.10")
+) -> PacingResult:
+    if budgeted <= Decimal("0.00"):
+        return {
+            "target_spent": Decimal("0.00"),
+            "delta_amount": Decimal("0.00"),
+            "delta_pct": None,
+            "status": "none",
+            "icon": "—",
+        }
+
+    spent = (-activity)  # activity is negative for spend
+    target = (budgeted * elapsed)
+    delta = (spent - target)
+    delta_pct: Optional[Decimal] = None
+    if target > Decimal("0.00"):
+        delta_pct = (delta / target)
+
+    # Threshold checks
+    # Overspending relative to target => slow down
+    if target > Decimal("0.00") and spent > (target * (Decimal("1.0") + upper_over_pct)):
+        status, icon = "slow_down", "🐢"
+    # Underspending relative to target => could spend more
+    elif target > Decimal("0.00") and spent < (target * (Decimal("1.0") - lower_under_pct)):
+        status, icon = "could_spend_more", "🐇"
+    else:
+        status, icon = "on_track", "🎯"
+
+    return {
+        "target_spent": target,
+        "delta_amount": delta,
+        "delta_pct": delta_pct,
+        "status": status,
+        "icon": icon,
+    }
+
+
 def per_category_weekly_breakdown(
     categories: list[Category],
     today: date,
     soft_warn: Decimal = Decimal("10.00"),
+    pacing_enabled: bool = True,
+    pacing_upper_over_pct: Decimal = Decimal("0.10"),
+    pacing_lower_under_pct: Decimal = Decimal("0.10"),
 ) -> list[dict[str, str | Decimal]]:
     """
     For each category:
@@ -87,17 +147,43 @@ def per_category_weekly_breakdown(
         av_dec = mu_to_decimal(c.available_mu)
         weekly = (av_dec / weeks_rem).quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
         status, icon = status_for_available(av_dec, soft_warn=soft_warn)
+        budgeted_dec = mu_to_decimal(c.budgeted_mu)
+        activity_dec = mu_to_decimal(c.activity_mu)
+        if pacing_enabled:
+            elapsed = elapsed_fraction(today)
+            pacing = compute_pacing(
+                budgeted=budgeted_dec,
+                activity=activity_dec,
+                elapsed=elapsed,
+                upper_over_pct=pacing_upper_over_pct,
+                lower_under_pct=pacing_lower_under_pct,
+            )
+        else:
+            pacing = {
+                "target_spent": Decimal("0.00"),
+                "delta_amount": Decimal("0.00"),
+                "delta_pct": None,
+                "status": "none",
+                "icon": "—",
+            }
+
         out.append(
             {
                 "id": c.id,
                 "group": c.group_name,
                 "name": c.name,
                 "available": av_dec,
-                "budgeted": mu_to_decimal(c.budgeted_mu),
-                "activity": mu_to_decimal(c.activity_mu),
+                "budgeted": budgeted_dec,
+                "activity": activity_dec,
                 "weekly": weekly,
                 "status": status,
                 "icon": icon,
+                # pacing fields
+                "target_spent": pacing["target_spent"],
+                "pacing_status": pacing["status"],
+                "pacing_icon": pacing["icon"],
+                "pacing_delta_amount": pacing["delta_amount"],
+                "pacing_delta_pct": pacing["delta_pct"],
             }
         )
     return out
