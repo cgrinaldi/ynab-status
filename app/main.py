@@ -14,7 +14,14 @@ from app.mailer import send_email
 
 # ---- Quick config for a first working run ----
 BUDGET_NAME = "Back in SF"
-WATCHLIST = {"Household Expenses": ["Groceries", "Misc"]}  # ["*"] = all in group
+WATCHLIST = {
+    "Household Expenses": ["Groceries", "Gifts", "Misc"],
+    "Quality of Life": ["Eating Out", "Vacation"],
+    "A's Expenses": ["Amount - A"],
+    "C's Expenses": ["Amount - C"],
+    "Baby": ["Baby Misc"],
+}  # ["*"] = all in group
+
 SOFT_WARN_THRESHOLD = Decimal("10.00")
 SENDER = "cgrinaldi@gmail.com"
 RECIPIENTS = ["cgrinaldi@gmail.com"]
