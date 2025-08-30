@@ -1,6 +1,7 @@
 from app.config import load_secrets
 from app.helpers import mu_to_decimal
 from app.ynab_client import YnabSDKClient
+from app.domain import select_categories
 
 
 if __name__ == "__main__":
@@ -9,8 +10,9 @@ if __name__ == "__main__":
         budget = ynab_client.get_budget_by_name("Back in SF")
         print(f"Budget: {budget.name}")
 
-        category = ynab_client.find_category_by_group_and_name(
-            budget.id, "Household Expenses", "Groceries"
+        categories = ynab_client.get_categories(budget.id)
+        selected_cats = select_categories(
+            categories, {"Household Expenses": ["Groceries", "Misc"]}
         )
         import pdb
 

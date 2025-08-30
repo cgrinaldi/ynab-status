@@ -141,6 +141,19 @@ class YnabSDKClient:
             )
         return groups
 
+    def get_categories(
+        self, budget_id: str, include_hidden: bool = False
+    ) -> list[Category]:
+        """Return all categories for a budget, optionally including hidden/deleted.
+
+        This reuses `get_category_groups` and flattens the categories.
+        """
+        groups = self.get_category_groups(budget_id, include_hidden=include_hidden)
+        categories: list[Category] = []
+        for g in groups:
+            categories.extend(g.categories)
+        return categories
+
     def find_category_by_group_and_name(
         self,
         budget_id: str,
