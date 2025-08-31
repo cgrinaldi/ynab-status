@@ -9,9 +9,10 @@ HTML_TMPL = """<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>YNAB Status · {{ date_str }}</title>
     <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.45; }
+      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.45; -webkit-text-size-adjust: 100%; }
       .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
       .header { padding: 12px 16px; border-radius: 12px; background: #f5f7ff; margin-bottom: 16px; }
       .kpi { font-size: 16px; margin: 4px 0; }
@@ -40,12 +41,33 @@ HTML_TMPL = """<!doctype html>
       /* Status column: keep on one line and set width */
       .status-col { white-space: nowrap; min-width: 75px; }
       /* Category column: slightly wider for long names */
-      .cat-col { min-width: 100px; }
+      .cat-col { min-width: 100px; word-break: break-word; }
       /* Pacing column: keep on one line and widen */
       .pacing-col { white-space: nowrap; min-width: 100px; }
       /* Group column: set width; only body cells top-align for rowspan */
       .group-col { min-width: 120px; }
       tbody td.group-col { vertical-align: top; color: #1e3a8a; }
+
+      /* Mobile tweaks */
+      @media only screen and (max-width: 600px) {
+        .wrap { padding: 12px; }
+        body { font-size: 16px; }
+        .kpi { font-size: 17px; }
+        th, td { padding: 10px 8px; }
+        th { font-size: 14px; }
+        .tag { font-size: 13px; padding: 3px 10px; }
+        /* Hide less-important numeric columns to reduce squish */
+        /* Columns: 1=Group, 2=Category, 3=Status, 4=Budgeted, 5=Amt Spent, 6=Remaining, 7=Target Now, 8=Pacing, 9=Weekly */
+        table thead th:nth-child(4),
+        table thead th:nth-child(5),
+        table thead th:nth-child(7),
+        table thead th:nth-child(9) { display: none; }
+        table tbody td:nth-child(4),
+        table tbody td:nth-child(5),
+        table tbody td:nth-child(7),
+        table tbody td:nth-child(9) { display: none; }
+        .banner { margin-bottom: 12px; }
+      }
     </style>
   </head>
   <body>
