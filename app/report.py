@@ -40,6 +40,8 @@ HTML_TMPL = """<!doctype html>
       .cat-col { min-width: 100px; }
       /* Pacing column: keep on one line and widen */
       .pacing-col { white-space: nowrap; min-width: 100px; }
+      /* Group column: narrower, top-aligned for rowspan */
+      .group-col { min-width: 120px; vertical-align: top; }
     </style>
   </head>
   <body>
@@ -55,6 +57,7 @@ HTML_TMPL = """<!doctype html>
       <table role="table" aria-label="Monitoring categories status">
         <thead>
           <tr>
+            <th class="group-col">Group</th>
             <th class="cat-col">Category</th>
             <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
@@ -67,11 +70,11 @@ HTML_TMPL = """<!doctype html>
         </thead>
         <tbody>
           {% for g in groups_monitored %}
-          <tr class="group-row">
-            <th colspan="8">{{ g.name }}</th>
-          </tr>
           {% for r in g.rows %}
           <tr>
+            {% if loop.first %}
+            <td class="group-col" rowspan="{{ g.rows|length }}"><strong>{{ g.name }}</strong></td>
+            {% endif %}
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
             <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
@@ -82,7 +85,6 @@ HTML_TMPL = """<!doctype html>
             <td class="amt">{% if r.weekly %}${{ r.weekly }}{% endif %}</td>
           </tr>
           {% endfor %}
-          <tr class="group-spacer"><td colspan="8"></td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -91,6 +93,7 @@ HTML_TMPL = """<!doctype html>
       <table role="table" aria-label="Not monitoring categories status">
         <thead>
           <tr>
+            <th class="group-col">Group</th>
             <th class="cat-col">Category</th>
             <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
@@ -103,11 +106,11 @@ HTML_TMPL = """<!doctype html>
         </thead>
         <tbody>
           {% for g in groups_unmonitored %}
-          <tr class="group-row">
-            <th colspan="8">{{ g.name }}</th>
-          </tr>
           {% for r in g.rows %}
           <tr>
+            {% if loop.first %}
+            <td class="group-col" rowspan="{{ g.rows|length }}"><strong>{{ g.name }}</strong></td>
+            {% endif %}
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
             <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
@@ -118,7 +121,6 @@ HTML_TMPL = """<!doctype html>
             <td class="amt">{% if r.weekly %}${{ r.weekly }}{% endif %}</td>
           </tr>
           {% endfor %}
-          <tr class="group-spacer"><td colspan="8"></td></tr>
           {% endfor %}
         </tbody>
       </table>
