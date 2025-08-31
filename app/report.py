@@ -49,7 +49,8 @@ HTML_TMPL = """<!doctype html>
         <div class="kpi"><em>Pacing:</em> Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.</div>
       </div>
 
-      <table role="table" aria-label="Category status">
+      <h2>Monitoring</h2>
+      <table role="table" aria-label="Monitoring categories status">
         <thead>
           <tr>
             <th class="cat-col">Category</th>
@@ -63,7 +64,43 @@ HTML_TMPL = """<!doctype html>
           </tr>
         </thead>
         <tbody>
-          {% for g in groups %}
+          {% for g in groups_monitored %}
+          <tr class="group-row">
+            <th colspan="8">{{ g.name }}</th>
+          </tr>
+          {% for r in g.rows %}
+          <tr>
+            <td class="cat-col"><strong>{{ r.name }}</strong></td>
+            <td class="status-col"><span class="tag {{ r.status }}">{{ r.icon }} {{ r.status }}</span></td>
+            <td class="amt">${{ r.budgeted }}</td>
+            <td class="amt">${{ r.activity }}</td>
+            <td class="amt {{ r.status }}">${{ r.available }}</td>
+            <td class="amt">{% if r.target_spent %}${{ r.target_spent }}{% else %}—{% endif %}</td>
+            <td class="pacing-col {{ r.pacing_class }}">{{ r.pacing }}</td>
+            <td class="amt">{% if r.weekly %}${{ r.weekly }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+          <tr class="group-spacer"><td colspan="8"></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h2>Not Monitoring</h2>
+      <table role="table" aria-label="Not monitoring categories status">
+        <thead>
+          <tr>
+            <th class="cat-col">Category</th>
+            <th class="status-col">Status</th>
+            <th class="amt">Budgeted</th>
+            <th class="amt">Amt Spent</th>
+            <th class="amt">Remaining</th>
+            <th class="amt">Target Spent by Now</th>
+            <th class="pacing-col">Pacing</th>
+            <th class="amt">Weekly Spend Remaining</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for g in groups_unmonitored %}
           <tr class="group-row">
             <th colspan="8">{{ g.name }}</th>
           </tr>
@@ -97,7 +134,17 @@ Rationale: For each category: Weekly = Remaining ÷ weeks remaining (floored to 
 Month complete: {{ month_complete }}
 Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.
 
-{% for g in groups -%}
+== Monitoring ==
+{% for g in groups_monitored -%}
+== {{ g.name }} ==
+{% for r in g.rows %}
+- {{ r.icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %} [{{ r.status }}]
+{% endfor %}
+
+{%- endfor %}
+
+== Not Monitoring ==
+{% for g in groups_unmonitored -%}
 == {{ g.name }} ==
 {% for r in g.rows %}
 - {{ r.icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %} [{{ r.status }}]
@@ -114,13 +161,18 @@ def render_email_per_category(
 
     red_count = sum(1 for r in rows_in if r["status"] == "red")
 
-    # Group rows by their category group, preserving input order
-    grouped: dict[str, list[dict]] = {}
+    # Group rows by their category group and monitor flag, preserving input order
+    grouped_mon: dict[str, list[dict]] = {}
+    grouped_unmon: dict[str, list[dict]] = {}
     for r in rows_in:
-        grouped.setdefault(r["group"], []).append(r)
+        is_mon = bool(r.get("monitor", True))
+        if is_mon:
+            grouped_mon.setdefault(r["group"], []).append(r)
+        else:
+            grouped_unmon.setdefault(r["group"], []).append(r)
 
-    groups = []
-    for group_name, items in grouped.items():
+    groups_monitored = []
+    for group_name, items in grouped_mon.items():
         vm_items = []
         for r in items:
             # Hide weekly when < 7 days left or when remaining is negative
@@ -168,14 +220,36 @@ def render_email_per_category(
                     "pacing_class": pacing_class,
                 }
             )
-        groups.append({"name": group_name, "rows": vm_items})
+        groups_monitored.append({"name": group_name, "rows": vm_items})
+
+    groups_unmonitored = []
+    for group_name, items in grouped_unmon.items():
+        vm_items = []
+        for r in items:
+            # For unmonitored, explicitly hide target/pacing/weekly regardless of thresholds
+            vm_items.append(
+                {
+                    "name": r["name"],
+                    "status": r["status"],
+                    "icon": r["icon"],
+                    "available": f"{r['available']:.2f}",
+                    "weekly": "",
+                    "budgeted": f"{r['budgeted']:.2f}",
+                    "activity": f"{r['activity']:.2f}",
+                    "target_spent": "",
+                    "pacing": "—",
+                    "pacing_class": "",
+                }
+            )
+        groups_unmonitored.append({"name": group_name, "rows": vm_items})
 
     month_elapsed = elapsed_fraction(today)
     ctx = {
         "date_str": today.isoformat(),
         "days_left": days_left,
         "weeks_left": f"{weeks_left:.2f}",
-        "groups": groups,
+        "groups_monitored": groups_monitored,
+        "groups_unmonitored": groups_unmonitored,
         "red_count": red_count,
         "month_complete": f"{(month_elapsed * Decimal(100)):.1f}%",
     }

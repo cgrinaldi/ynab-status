@@ -1,14 +1,14 @@
 from loguru import logger
 from datetime import date
 from decimal import Decimal, ROUND_FLOOR
-from typing import TypedDict, Optional
+from typing import TypedDict, Optional, Any
 from app.ynab_client import Category
 from app.helpers import mu_to_decimal
 
 
 def select_categories(
     all_categories: list[Category],
-    categories_to_select: dict[str, list[str]],
+    categories_to_select: dict[str, list[Any]],
 ) -> list[Category]:
     if not categories_to_select:
         return []
@@ -25,13 +25,27 @@ def select_categories(
             logger.warning(f"No matching category group for '{group_name}'")
             continue
 
-        if not cat_names or (len(cat_names) == 1 and cat_names[0] == "*"):
+        # If any wildcard present ("*" or {"name": "*"}), include entire group
+        wildcard_present = False
+        for it in (cat_names or []):
+            if it == "*" or (isinstance(it, dict) and it.get("name") == "*"):
+                wildcard_present = True
+                break
+        if wildcard_present:
             for c in group_cats:
                 selected[c.id] = c
-            continue
 
         for cat_name in cat_names:
-            matches = [c for c in group_cats if c.name == cat_name]
+            # Accept either plain category names (str) or dicts like
+            # {"name": "Groceries", "monitor": false}
+            if isinstance(cat_name, dict):
+                name = cat_name.get("name")
+            else:
+                name = cat_name
+            if name == "*":
+                matches = group_cats
+            else:
+                matches = [c for c in group_cats if c.name == name]
             if not matches:
                 logger.warning(
                     f"No matching category '{cat_name}' in group '{group_name}'"
@@ -134,6 +148,7 @@ def per_category_weekly_breakdown(
     pacing_enabled: bool = True,
     pacing_upper_over_pct: Decimal = Decimal("0.10"),
     pacing_lower_under_pct: Decimal = Decimal("0.10"),
+    monitor_map: Optional[dict[str, bool]] = None,
 ) -> list[dict[str, str | Decimal]]:
     """
     For each category:
@@ -178,6 +193,8 @@ def per_category_weekly_breakdown(
                 "weekly": weekly,
                 "status": status,
                 "icon": icon,
+                # whether to show pacing/weekly/target details for this category
+                "monitor": (monitor_map.get(c.id, True) if monitor_map else True),
                 # pacing fields
                 "target_spent": pacing["target_spent"],
                 "pacing_status": pacing["status"],
@@ -187,3 +204,56 @@ def per_category_weekly_breakdown(
             }
         )
     return out
+
+
+def build_monitor_map(
+    all_categories: list[Category],
+    categories_to_select: dict[str, list[Any]],
+) -> dict[str, bool]:
+    """
+    Build a map of category_id -> monitor flag (default True) from the watchlist.
+
+    categories_to_select supports per-item either a string name or a dict:
+    {"name": "Groceries", "monitor": false}
+    """
+    if not categories_to_select:
+        return {}
+
+    groups: dict[str, list[Category]] = {}
+    for c in all_categories:
+        groups.setdefault(c.group_name, []).append(c)
+
+    monitor_map: dict[str, bool] = {}
+    for group_name, cat_items in categories_to_select.items():
+        group_cats = groups.get(group_name, [])
+        if not group_cats:
+            logger.warning(f"No matching category group for '{group_name}'")
+            continue
+
+        # Wildcard: mark all in group as monitored (True)
+        if not cat_items or (len(cat_items) == 1 and cat_items[0] == "*"):
+            for c in group_cats:
+                monitor_map[c.id] = True
+            continue
+
+        for item in cat_items:
+            if isinstance(item, dict):
+                name = item.get("name")
+                monitor = bool(item.get("monitor", True))
+            else:
+                name = item
+                monitor = True
+
+            if name == "*":
+                matches = group_cats
+            else:
+                matches = [c for c in group_cats if c.name == name]
+            if not matches:
+                logger.warning(
+                    f"No matching category '{name}' in group '{group_name}' for monitor flag"
+                )
+                continue
+            for c in matches:
+                monitor_map[c.id] = monitor
+
+    return monitor_map

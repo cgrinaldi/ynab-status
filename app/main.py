@@ -8,6 +8,7 @@ from app.domain import (
     select_categories,
     per_category_weekly_breakdown,
     days_and_weeks_remaining,
+    build_monitor_map,
 )
 from app.report import render_email_per_category
 from app.mailer import send_email
@@ -15,12 +16,20 @@ from app.mailer import send_email
 # ---- Quick config for a first working run ----
 BUDGET_NAME = "Back in SF"
 WATCHLIST = {
-    "Household Expenses": ["Groceries", "Gifts", "Misc"],
+    "Household Expenses": [
+        "Groceries",
+        {"name": "Gifts", "monitor": False},
+        "Misc",
+    ],
     "Quality of Life": ["Eating Out", "Vacation"],
-    "A's Expenses": ["Amount - A"],
-    "C's Expenses": ["Amount - C"],
+    "A's Expenses": [
+        {"name": "Amount - A", "monitor": False},
+    ],
+    "C's Expenses": [
+        {"name": "Amount - C", "monitor": False},
+    ],
     "Baby": ["Baby Misc"],
-}  # ["*"] = all in group
+}  # ["*"] = all in group; dict entries can set monitor flags
 
 SOFT_WARN_THRESHOLD = Decimal("10.00")
 SENDER = "cgrinaldi@gmail.com"
@@ -39,6 +48,7 @@ def main():
         budget = ynab_client.get_budget_by_name(BUDGET_NAME)
         all_cats = ynab_client.get_categories(budget.id)
         selected = select_categories(all_cats, WATCHLIST)
+        monitor_map = build_monitor_map(all_cats, WATCHLIST)
 
         today = date.today()
         rows = per_category_weekly_breakdown(
@@ -48,6 +58,7 @@ def main():
             pacing_enabled=PACING_ENABLED,
             pacing_upper_over_pct=PACING_UPPER_OVER_PCT,
             pacing_lower_under_pct=PACING_LOWER_UNDER_PCT,
+            monitor_map=monitor_map,
         )
         days_left, weeks_left = days_and_weeks_remaining(today)
         text, html = render_email_per_category(rows, days_left, weeks_left, today)
