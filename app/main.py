@@ -33,7 +33,7 @@ WATCHLIST = {
 
 SOFT_WARN_THRESHOLD = Decimal("10.00")
 SENDER = "cgrinaldi@gmail.com"
-RECIPIENTS = ["cgrinaldi@gmail.com"]
+RECIPIENTS = ["cgrinaldi@gmail.com", "allison.s.rinaldi@gmail.com"]
 DRY_RUN_WRITE_HTML = True
 # Pacing config (to be moved to config.yaml later)
 PACING_ENABLED = True
