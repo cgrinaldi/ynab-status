@@ -31,6 +31,8 @@ HTML_TMPL = """<!doctype html>
       .group-row th { font-size: 16px; color: #2b59c3; text-transform: none; font-weight: 700; }
       .group-row { background: #fafbff; position: sticky; top: 0; }
       .group-spacer { height: 6px; }
+      /* Banner image */
+      .banner { margin-bottom: 16px; border-radius: 12px; overflow: hidden; }
       /* Section bars */
       .section-bar { background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 10px; font-weight: 700; margin: 20px 0 10px; }
       /* Category name emphasis */
@@ -47,6 +49,9 @@ HTML_TMPL = """<!doctype html>
   </head>
   <body>
     <div class="wrap">
+      <div class="banner" role="img" aria-label="Banner image">
+        <img src="https://www.placecats.com/900/200" alt="Cat banner" style="width: 100%; height: auto; display: block; border: 0;">
+      </div>
       <div class="header" role="region" aria-label="Summary">
         <div class="kpi"><strong>Days left:</strong> {{ days_left }} · <strong>Weeks left:</strong> {{ weeks_left }}</div>
         <div class="kpi"><strong>Month complete:</strong> {{ month_complete }}</div>
