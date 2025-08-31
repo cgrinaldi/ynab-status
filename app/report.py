@@ -43,8 +43,9 @@ HTML_TMPL = """<!doctype html>
       .cat-col { min-width: 100px; }
       /* Pacing column: keep on one line and widen */
       .pacing-col { white-space: nowrap; min-width: 100px; }
-      /* Group column: narrower, top-aligned for rowspan */
-      .group-col { min-width: 120px; vertical-align: top; }
+      /* Group column: set width; only body cells top-align for rowspan */
+      .group-col { min-width: 120px; }
+      tbody td.group-col { vertical-align: top; color: #1e3a8a; }
     </style>
   </head>
   <body>
