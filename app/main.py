@@ -61,7 +61,9 @@ def main():
             monitor_map=monitor_map,
         )
         days_left, weeks_left = days_and_weeks_remaining(today)
-        text, html = render_email_per_category(rows, days_left, weeks_left, today)
+        text, html = render_email_per_category(
+            rows, days_left, weeks_left, today, budget.last_modified_on
+        )
 
         subject = f"YNAB Daily · {today.isoformat()} · Per-category weekly allowances"
         if DRY_RUN_WRITE_HTML:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime, timezone
+from typing import Optional
 from jinja2 import Environment, BaseLoader, select_autoescape
 from app.domain import elapsed_fraction
 
@@ -51,6 +52,7 @@ HTML_TMPL = """<!doctype html>
         <div class="kpi"><em>Rationale:</em> For each category: Weekly = Remaining ÷ weeks remaining (floored to cents).</div>
         <div class="kpi"><strong>Month complete:</strong> {{ month_complete }}</div>
         <div class="kpi"><em>Pacing:</em> Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.</div>
+        <div class="kpi"><strong>Budget last updated:</strong> {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}</div>
       </div>
 
       <div class="section-bar">Monitoring</div>
@@ -137,6 +139,7 @@ Days left: {{ days_left }} | Weeks left: {{ weeks_left }}
 Rationale: For each category: Weekly = Remaining ÷ weeks remaining (floored to cents).
 Month complete: {{ month_complete }}
 Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.
+Budget last updated: {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}
 
 == Monitoring ==
 {% for g in groups_monitored -%}
@@ -159,7 +162,11 @@ Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under
 
 
 def render_email_per_category(
-    rows_in: list[dict], days_left: int, weeks_left: Decimal, today: date
+    rows_in: list[dict],
+    days_left: int,
+    weeks_left: Decimal,
+    today: date,
+    budget_last_modified: Optional[datetime] = None,
 ) -> tuple[str, str]:
     env = Environment(loader=BaseLoader(), autoescape=select_autoescape())
 
@@ -252,6 +259,22 @@ def render_email_per_category(
         groups_unmonitored.append({"name": group_name, "rows": vm_items})
 
     month_elapsed = elapsed_fraction(today)
+
+    # Budget last updated display
+    budget_last_updated_str = "—"
+    budget_last_updated_ago = ""
+    if budget_last_modified is not None:
+        # Normalize to UTC date for consistency
+        try:
+            mod_dt = budget_last_modified.astimezone(timezone.utc)
+        except Exception:
+            mod_dt = budget_last_modified
+        mod_date = mod_dt.date()
+        budget_last_updated_str = mod_date.isoformat()
+        days_ago = max(0, (today - mod_date).days)
+        # Always show numeric "N days ago" as requested
+        unit = "day" if abs(days_ago) == 1 else "days"
+        budget_last_updated_ago = f"{days_ago} {unit} ago"
     ctx = {
         "date_str": today.isoformat(),
         "days_left": days_left,
@@ -260,6 +283,8 @@ def render_email_per_category(
         "groups_unmonitored": groups_unmonitored,
         "red_count": red_count,
         "month_complete": f"{(month_elapsed * Decimal(100)):.1f}%",
+        "budget_last_updated_str": budget_last_updated_str,
+        "budget_last_updated_ago": budget_last_updated_ago,
     }
 
     html = env.from_string(HTML_TMPL).render(**ctx)
