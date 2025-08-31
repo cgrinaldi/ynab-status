@@ -53,10 +53,8 @@ jobs:
 
       - name: Run app.main
         env:
-          YNAB_TOKEN: ${{ secrets.YNAB_TOKEN }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_TO_PRIMARY: ${{ secrets.EMAIL_TO_PRIMARY }}
-          EMAIL_TO_SECONDARY: ${{ secrets.EMAIL_TO_SECONDARY }}
+          YNAB_API_KEY: ${{ secrets.YNAB_API_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          
           # add any additional config your app expects
         run: uv run -m app.main
