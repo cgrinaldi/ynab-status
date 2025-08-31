@@ -49,9 +49,7 @@ HTML_TMPL = """<!doctype html>
     <div class="wrap">
       <div class="header" role="region" aria-label="Summary">
         <div class="kpi"><strong>Days left:</strong> {{ days_left }} · <strong>Weeks left:</strong> {{ weeks_left }}</div>
-        <div class="kpi"><em>Rationale:</em> For each category: Weekly = Remaining ÷ weeks remaining (floored to cents).</div>
         <div class="kpi"><strong>Month complete:</strong> {{ month_complete }}</div>
-        <div class="kpi"><em>Pacing:</em> Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.</div>
         <div class="kpi"><strong>Budget last updated:</strong> {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}</div>
       </div>
 
@@ -136,9 +134,7 @@ HTML_TMPL = """<!doctype html>
 
 TEXT_TMPL = """YNAB Status · {{ date_str }}
 Days left: {{ days_left }} | Weeks left: {{ weeks_left }}
-Rationale: For each category: Weekly = Remaining ÷ weeks remaining (floored to cents).
 Month complete: {{ month_complete }}
-Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.
 Budget last updated: {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}
 
 == Monitoring ==
