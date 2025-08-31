@@ -81,7 +81,7 @@ HTML_TMPL = """<!doctype html>
         <div class="kpi"><strong>Budget last updated:</strong> {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}</div>
       </div>
 
-      <div class="section-bar">Monitoring</div>
+      <div class="section-bar">Monthly Spending Categories</div>
       <table role="table" aria-label="Monitoring categories status">
         <thead>
           <tr>
@@ -117,7 +117,7 @@ HTML_TMPL = """<!doctype html>
         </tbody>
       </table>
 
-      <div class="section-bar">Not Monitoring</div>
+      <div class="section-bar">Savings Buckets</div>
       <table role="table" aria-label="Not monitoring categories status">
         <thead>
           <tr>
