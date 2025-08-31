@@ -71,7 +71,7 @@ HTML_TMPL = """<!doctype html>
           {% for r in g.rows %}
           <tr>
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
-            <td class="status-col"><span class="tag {{ r.status }}">{{ r.icon }} {{ r.status }}</span></td>
+            <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
             <td class="amt">${{ r.activity }}</td>
             <td class="amt {{ r.status }}">${{ r.available }}</td>
@@ -107,7 +107,7 @@ HTML_TMPL = """<!doctype html>
           {% for r in g.rows %}
           <tr>
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
-            <td class="status-col"><span class="tag {{ r.status }}">{{ r.icon }} {{ r.status }}</span></td>
+            <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
             <td class="amt">${{ r.activity }}</td>
             <td class="amt {{ r.status }}">${{ r.available }}</td>
@@ -138,7 +138,7 @@ Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under
 {% for g in groups_monitored -%}
 == {{ g.name }} ==
 {% for r in g.rows %}
-- {{ r.icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %} [{{ r.status }}]
+- {{ r.status_icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %}
 {% endfor %}
 
 {%- endfor %}
@@ -147,7 +147,7 @@ Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under
 {% for g in groups_unmonitored -%}
 == {{ g.name }} ==
 {% for r in g.rows %}
-- {{ r.icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %} [{{ r.status }}]
+- {{ r.status_icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %}
 {% endfor %}
 
 {%- endfor %}
@@ -211,6 +211,8 @@ def render_email_per_category(
                     "name": r["name"],
                     "status": r["status"],
                     "icon": r["icon"],
+                    "status_class": r.get("status_class", r["status"]),
+                    "status_icon": r.get("status_icon", r["icon"]),
                     "available": f"{r['available']:.2f}",
                     "weekly": weekly_str,
                     "budgeted": f"{r['budgeted']:.2f}",
@@ -232,6 +234,8 @@ def render_email_per_category(
                     "name": r["name"],
                     "status": r["status"],
                     "icon": r["icon"],
+                    "status_class": r.get("status_class", r["status"]),
+                    "status_icon": r.get("status_icon", r["icon"]),
                     "available": f"{r['available']:.2f}",
                     "weekly": "",
                     "budgeted": f"{r['budgeted']:.2f}",

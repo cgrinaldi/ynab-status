@@ -161,6 +161,7 @@ def per_category_weekly_breakdown(
     for c in categories:
         av_dec = mu_to_decimal(c.available_mu)
         weekly = (av_dec / weeks_rem).quantize(Decimal("0.01"), rounding=ROUND_FLOOR)
+        # Availability-based status (used for remaining amount coloring)
         status, icon = status_for_available(av_dec, soft_warn=soft_warn)
         budgeted_dec = mu_to_decimal(c.budgeted_mu)
         activity_dec = mu_to_decimal(c.activity_mu)
@@ -182,6 +183,20 @@ def per_category_weekly_breakdown(
                 "icon": "—",
             }
 
+        # Combined status for the Status column:
+        # - Red exclamation if remaining is negative
+        # - Warning sign if pacing indicates we're behind (slow_down)
+        # - Green check otherwise
+        if av_dec < Decimal("0.00"):
+            status_class = "red"
+            status_icon = "❗"
+        elif pacing.get("status") == "slow_down":
+            status_class = "amber"
+            status_icon = "⚠️"
+        else:
+            status_class = "green"
+            status_icon = "✅"
+
         out.append(
             {
                 "id": c.id,
@@ -193,6 +208,8 @@ def per_category_weekly_breakdown(
                 "weekly": weekly,
                 "status": status,
                 "icon": icon,
+                "status_class": status_class,
+                "status_icon": status_icon,
                 # whether to show pacing/weekly/target details for this category
                 "monitor": (monitor_map.get(c.id, True) if monitor_map else True),
                 # pacing fields

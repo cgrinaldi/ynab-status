@@ -21,14 +21,14 @@ WATCHLIST = {
         {"name": "Gifts", "monitor": False},
         "Misc",
     ],
-    "Quality of Life": ["Eating Out", "Vacation"],
+    "Quality of Life": ["Eating Out", {"name": "Vacation", "monitor": False}],
     "A's Expenses": [
         {"name": "Amount - A", "monitor": False},
     ],
     "C's Expenses": [
         {"name": "Amount - C", "monitor": False},
     ],
-    "Baby": ["Baby Misc"],
+    "Baby": ["Babysitting", "Baby Misc"],
 }  # ["*"] = all in group; dict entries can set monitor flags
 
 SOFT_WARN_THRESHOLD = Decimal("10.00")
