@@ -48,7 +48,16 @@ jobs:
             ${{ runner.os }}-uv311-
 
       - name: Sync dependencies from lock (strict, reproducible)
-        run: uv sync --frozen --locked
+        # --frozen + --locked refuse resolution changes; fails if lock/env mismatch
+        run: uv sync --frozen
+
+      - name: Write Gmail OAuth files
+        env:
+          GMAIL_CREDENTIALS_JSON: ${{ secrets.GMAIL_CREDENTIALS_JSON }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+        run: |
+          printf '%s' "$GMAIL_CREDENTIALS_JSON" > credentials.json
+          printf '%s' "$GMAIL_TOKEN_JSON" > token.json
 
       # Reconstruct Gmail OAuth files from encrypted repo secrets.
       - name: Write Gmail OAuth files
@@ -61,8 +70,8 @@ jobs:
 
       - name: Run app.main
         env:
-          # Must match app/config.py (EnvSecrets)
           YNAB_API_KEY: ${{ secrets.YNAB_API_KEY }}
-          # If kept required in EnvSecrets, uncomment the next line:
-          # GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+
+          # add any additional config your app expects
         run: uv run -m app.main
