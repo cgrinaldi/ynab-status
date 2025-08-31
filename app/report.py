@@ -30,6 +30,8 @@ HTML_TMPL = """<!doctype html>
       .group-row th { font-size: 16px; color: #2b59c3; text-transform: none; font-weight: 700; }
       .group-row { background: #fafbff; position: sticky; top: 0; }
       .group-spacer { height: 6px; }
+      /* Section bars */
+      .section-bar { background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 10px; font-weight: 700; margin: 20px 0 10px; }
       /* Category name emphasis */
       /* intentionally plain; group headers are emphasized */
       /* Status column: keep on one line and set width */
@@ -49,7 +51,7 @@ HTML_TMPL = """<!doctype html>
         <div class="kpi"><em>Pacing:</em> Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.</div>
       </div>
 
-      <h2>Monitoring</h2>
+      <div class="section-bar">Monitoring</div>
       <table role="table" aria-label="Monitoring categories status">
         <thead>
           <tr>
@@ -85,7 +87,7 @@ HTML_TMPL = """<!doctype html>
         </tbody>
       </table>
 
-      <h2>Not Monitoring</h2>
+      <div class="section-bar">Not Monitoring</div>
       <table role="table" aria-label="Not monitoring categories status">
         <thead>
           <tr>
