@@ -19,6 +19,7 @@ WATCHLIST = {
     "Household Expenses": [
         "Groceries",
         {"name": "Gifts", "monitor": False},
+        "Transportation",
         "Misc",
     ],
     "Quality of Life": ["Eating Out", {"name": "Vacation", "monitor": False}],
