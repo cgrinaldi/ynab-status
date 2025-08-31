@@ -1,0 +1,62 @@
+name: YNAB Daily Run (uv)
+
+on:
+  schedule:
+    # 07:00 America/Los_Angeles year-round (cron runs in UTC)
+    - cron: "0 14 * 3-11 *"   # Mar–Nov → 14:00 UTC
+    - cron: "0 15 * 1-2,12 *" # Dec–Feb → 15:00 UTC
+  workflow_dispatch: {}
+
+concurrency:
+  group: ynab-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Put the venv in the repo so we can cache it precisely
+  UV_PROJECT_ENVIRONMENT: .venv
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4  # 🔎 [actions/checkout](https://www.google.com/search?q=actions%2Fcheckout)
+
+      - name: Install uv
+        # Installs uv to ~/.local/bin/uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Add uv to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # Optional: ensure the Python version you expect (mirrors your pyproject/tool-uv settings)
+      # If you pin Python in pyproject.toml, uv will fetch it; otherwise install a version explicitly:
+      - name: Ensure Python 3.11 available via uv
+        run: uv python install 3.11
+
+      - name: Cache uv virtualenv (tied to uv.lock)
+        uses: actions/cache@v4  # 🔎 [actions/cache](https://www.google.com/search?q=github+actions+cache)
+        with:
+          path: |
+            .venv
+            ~/.cache/uv
+          key: ${{ runner.os }}-uv311-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv311-
+
+      - name: Sync dependencies from lock (strict, reproducible)
+        # --frozen + --locked refuse resolution changes; fails if lock/env mismatch
+        run: uv sync --frozen --locked
+
+      - name: Run app.main
+        env:
+          YNAB_TOKEN: ${{ secrets.YNAB_TOKEN }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO_PRIMARY: ${{ secrets.EMAIL_TO_PRIMARY }}
+          EMAIL_TO_SECONDARY: ${{ secrets.EMAIL_TO_SECONDARY }}
+          # add any additional config your app expects
+        run: uv run -m app.main
