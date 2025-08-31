@@ -209,14 +209,14 @@ def render_email_per_category(
         for r in items:
             # Hide weekly when < 7 days left or when remaining is negative
             hide_weekly = days_left < 7 or r["available"] < Decimal("0.00")
-            weekly_str = "" if hide_weekly else f"{r['weekly']:.2f}"
+            weekly_str = "" if hide_weekly else f"{r['weekly']:,.2f}"
             # Prepare display with quantization/formatting
             target_str = ""
             pacing_str = "—"
             if r.get("target_spent") is not None and r["target_spent"] > Decimal(
                 "0.00"
             ):
-                target_str = f"{r['target_spent']:.2f}"
+                target_str = f"{r['target_spent']:,.2f}"
 
             # Build pacing string if we have a status (not 'none')
             status = r.get("pacing_status", "none")
@@ -228,7 +228,7 @@ def render_email_per_category(
                 if isinstance(delta_amt, Decimal):
                     display_delta = -delta_amt
                     sign = "+" if display_delta >= Decimal("0.00") else "-"
-                    delta_amt_str = f"{sign}${abs(display_delta):.2f}"
+                    delta_amt_str = f"{sign}${abs(display_delta):,.2f}"
                 else:
                     delta_amt_str = ""
                 # Show only emoji and amount, color coded via class
@@ -245,10 +245,10 @@ def render_email_per_category(
                     "icon": r["icon"],
                     "status_class": r.get("status_class", r["status"]),
                     "status_icon": r.get("status_icon", r["icon"]),
-                    "available": f"{r['available']:.2f}",
+                    "available": f"{r['available']:,.2f}",
                     "weekly": weekly_str,
-                    "budgeted": f"{r['budgeted']:.2f}",
-                    "activity": f"{r['activity']:.2f}",
+                    "budgeted": f"{r['budgeted']:,.2f}",
+                    "activity": f"{r['activity']:,.2f}",
                     "target_spent": target_str,
                     "pacing": pacing_str,
                     "pacing_class": pacing_class,
@@ -268,10 +268,10 @@ def render_email_per_category(
                     "icon": r["icon"],
                     "status_class": r.get("status_class", r["status"]),
                     "status_icon": r.get("status_icon", r["icon"]),
-                    "available": f"{r['available']:.2f}",
+                    "available": f"{r['available']:,.2f}",
                     "weekly": "",
-                    "budgeted": f"{r['budgeted']:.2f}",
-                    "activity": f"{r['activity']:.2f}",
+                    "budgeted": f"{r['budgeted']:,.2f}",
+                    "activity": f"{r['activity']:,.2f}",
                     "target_spent": "",
                     "pacing": "—",
                     "pacing_class": "",
