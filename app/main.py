@@ -29,6 +29,10 @@ WATCHLIST = {
     "C's Expenses": [
         {"name": "Amount - C", "monitor": False},
     ],
+    "Savings": [
+        {"name": "General", "monitor": False},
+        {"name": "Inheritance", "monitor": False}
+    ]
     "Baby": ["Babysitting", "Baby Misc"],
 }  # ["*"] = all in group; dict entries can set monitor flags
 

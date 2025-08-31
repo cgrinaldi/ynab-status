@@ -127,9 +127,6 @@ HTML_TMPL = """<!doctype html>
             <th class="amt">Budgeted</th>
             <th class="amt">Amt Spent</th>
             <th class="amt">Remaining</th>
-            <th class="amt">Target Spent by Now</th>
-            <th class="pacing-col">Pacing</th>
-            <th class="amt">Weekly Spend Remaining</th>
           </tr>
         </thead>
         <tbody>
