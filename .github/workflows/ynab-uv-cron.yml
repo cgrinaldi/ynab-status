@@ -49,7 +49,7 @@ jobs:
 
       - name: Sync dependencies from lock (strict, reproducible)
         # --frozen + --locked refuse resolution changes; fails if lock/env mismatch
-        run: uv sync --frozen --locked
+        run: uv sync --frozen
 
       - name: Run app.main
         env:
