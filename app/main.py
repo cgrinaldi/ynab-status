@@ -33,7 +33,7 @@ WATCHLIST = {
 
 SOFT_WARN_THRESHOLD = Decimal("10.00")
 SENDER = "cgrinaldi@gmail.com"
-RECIPIENTS = ["cgrinaldi@gmail.com"]
+RECIPIENTS = ["cgrinaldi@gmail.com", "allison.s.rinaldi@gmail.com"]
 DRY_RUN_WRITE_HTML = True
 # Pacing config (to be moved to config.yaml later)
 PACING_ENABLED = True
@@ -61,7 +61,9 @@ def main():
             monitor_map=monitor_map,
         )
         days_left, weeks_left = days_and_weeks_remaining(today)
-        text, html = render_email_per_category(rows, days_left, weeks_left, today)
+        text, html = render_email_per_category(
+            rows, days_left, weeks_left, today, budget.last_modified_on
+        )
 
         subject = f"YNAB Daily · {today.isoformat()} · Per-category weekly allowances"
         if DRY_RUN_WRITE_HTML:

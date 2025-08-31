@@ -1,6 +1,7 @@
 from __future__ import annotations
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime, timezone
+from typing import Optional
 from jinja2 import Environment, BaseLoader, select_autoescape
 from app.domain import elapsed_fraction
 
@@ -30,6 +31,10 @@ HTML_TMPL = """<!doctype html>
       .group-row th { font-size: 16px; color: #2b59c3; text-transform: none; font-weight: 700; }
       .group-row { background: #fafbff; position: sticky; top: 0; }
       .group-spacer { height: 6px; }
+      /* Banner image */
+      .banner { margin-bottom: 16px; border-radius: 12px; overflow: hidden; }
+      /* Section bars */
+      .section-bar { background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 10px; font-weight: 700; margin: 20px 0 10px; }
       /* Category name emphasis */
       /* intentionally plain; group headers are emphasized */
       /* Status column: keep on one line and set width */
@@ -38,21 +43,27 @@ HTML_TMPL = """<!doctype html>
       .cat-col { min-width: 100px; }
       /* Pacing column: keep on one line and widen */
       .pacing-col { white-space: nowrap; min-width: 100px; }
+      /* Group column: set width; only body cells top-align for rowspan */
+      .group-col { min-width: 120px; }
+      tbody td.group-col { vertical-align: top; color: #1e3a8a; }
     </style>
   </head>
   <body>
     <div class="wrap">
+      <div class="banner" role="img" aria-label="Banner image">
+        <img src="https://www.placecats.com/900/200" alt="Cat banner" style="width: 100%; height: auto; display: block; border: 0;">
+      </div>
       <div class="header" role="region" aria-label="Summary">
         <div class="kpi"><strong>Days left:</strong> {{ days_left }} · <strong>Weeks left:</strong> {{ weeks_left }}</div>
-        <div class="kpi"><em>Rationale:</em> For each category: Weekly = Remaining ÷ weeks remaining (floored to cents).</div>
         <div class="kpi"><strong>Month complete:</strong> {{ month_complete }}</div>
-        <div class="kpi"><em>Pacing:</em> Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.</div>
+        <div class="kpi"><strong>Budget last updated:</strong> {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}</div>
       </div>
 
-      <h2>Monitoring</h2>
+      <div class="section-bar">Monitoring</div>
       <table role="table" aria-label="Monitoring categories status">
         <thead>
           <tr>
+            <th class="group-col">Group</th>
             <th class="cat-col">Category</th>
             <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
@@ -65,11 +76,11 @@ HTML_TMPL = """<!doctype html>
         </thead>
         <tbody>
           {% for g in groups_monitored %}
-          <tr class="group-row">
-            <th colspan="8">{{ g.name }}</th>
-          </tr>
           {% for r in g.rows %}
           <tr>
+            {% if loop.first %}
+            <td class="group-col" rowspan="{{ g.rows|length }}"><strong>{{ g.name }}</strong></td>
+            {% endif %}
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
             <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
@@ -80,15 +91,15 @@ HTML_TMPL = """<!doctype html>
             <td class="amt">{% if r.weekly %}${{ r.weekly }}{% endif %}</td>
           </tr>
           {% endfor %}
-          <tr class="group-spacer"><td colspan="8"></td></tr>
           {% endfor %}
         </tbody>
       </table>
 
-      <h2>Not Monitoring</h2>
+      <div class="section-bar">Not Monitoring</div>
       <table role="table" aria-label="Not monitoring categories status">
         <thead>
           <tr>
+            <th class="group-col">Group</th>
             <th class="cat-col">Category</th>
             <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
@@ -101,11 +112,11 @@ HTML_TMPL = """<!doctype html>
         </thead>
         <tbody>
           {% for g in groups_unmonitored %}
-          <tr class="group-row">
-            <th colspan="8">{{ g.name }}</th>
-          </tr>
           {% for r in g.rows %}
           <tr>
+            {% if loop.first %}
+            <td class="group-col" rowspan="{{ g.rows|length }}"><strong>{{ g.name }}</strong></td>
+            {% endif %}
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
             <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
@@ -116,7 +127,6 @@ HTML_TMPL = """<!doctype html>
             <td class="amt">{% if r.weekly %}${{ r.weekly }}{% endif %}</td>
           </tr>
           {% endfor %}
-          <tr class="group-spacer"><td colspan="8"></td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -130,9 +140,8 @@ HTML_TMPL = """<!doctype html>
 
 TEXT_TMPL = """YNAB Status · {{ date_str }}
 Days left: {{ days_left }} | Weeks left: {{ weeks_left }}
-Rationale: For each category: Weekly = Remaining ÷ weeks remaining (floored to cents).
 Month complete: {{ month_complete }}
-Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under target; 🎯 otherwise.
+Budget last updated: {{ budget_last_updated_str }}{% if budget_last_updated_ago %} ({{ budget_last_updated_ago }}){% endif %}
 
 == Monitoring ==
 {% for g in groups_monitored -%}
@@ -155,7 +164,11 @@ Pacing: Target = Budget × elapsed. 🐢 if >10% over target; 🐇 if >10% under
 
 
 def render_email_per_category(
-    rows_in: list[dict], days_left: int, weeks_left: Decimal, today: date
+    rows_in: list[dict],
+    days_left: int,
+    weeks_left: Decimal,
+    today: date,
+    budget_last_modified: Optional[datetime] = None,
 ) -> tuple[str, str]:
     env = Environment(loader=BaseLoader(), autoescape=select_autoescape())
 
@@ -248,6 +261,22 @@ def render_email_per_category(
         groups_unmonitored.append({"name": group_name, "rows": vm_items})
 
     month_elapsed = elapsed_fraction(today)
+
+    # Budget last updated display
+    budget_last_updated_str = "—"
+    budget_last_updated_ago = ""
+    if budget_last_modified is not None:
+        # Normalize to UTC date for consistency
+        try:
+            mod_dt = budget_last_modified.astimezone(timezone.utc)
+        except Exception:
+            mod_dt = budget_last_modified
+        mod_date = mod_dt.date()
+        budget_last_updated_str = mod_date.isoformat()
+        days_ago = max(0, (today - mod_date).days)
+        # Always show numeric "N days ago" as requested
+        unit = "day" if abs(days_ago) == 1 else "days"
+        budget_last_updated_ago = f"{days_ago} {unit} ago"
     ctx = {
         "date_str": today.isoformat(),
         "days_left": days_left,
@@ -256,6 +285,8 @@ def render_email_per_category(
         "groups_unmonitored": groups_unmonitored,
         "red_count": red_count,
         "month_complete": f"{(month_elapsed * Decimal(100)):.1f}%",
+        "budget_last_updated_str": budget_last_updated_str,
+        "budget_last_updated_ago": budget_last_updated_ago,
     }
 
     html = env.from_string(HTML_TMPL).render(**ctx)
