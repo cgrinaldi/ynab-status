@@ -14,7 +14,7 @@ from app.report import render_email_per_category
 from app.mailer import send_email
 
 # ---- Quick config for a first working run ----
-BUDGET_NAME = "Back in SF"
+BUDGET_NAME = "2025 Restart"
 WATCHLIST = {
     "Household Expenses": [
         "Groceries",
