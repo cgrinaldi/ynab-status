@@ -39,9 +39,9 @@ HTML_TMPL = """<!doctype html>
       /* Category name emphasis */
       /* intentionally plain; group headers are emphasized */
       /* Status column: keep on one line and set width */
-      .status-col { white-space: nowrap; min-width: 75px; }
+      .status-col { white-space: nowrap; min-width: 35px; }
       /* Category column: slightly wider for long names */
-      .cat-col { min-width: 100px; word-break: break-word; }
+      .cat-col { min-width: 120px; word-break: break-word; }
       /* Pacing column: keep on one line and widen */
       .pacing-col { white-space: nowrap; min-width: 100px; }
       /* Group column: set width; only body cells top-align for rowspan */
@@ -90,7 +90,7 @@ HTML_TMPL = """<!doctype html>
             <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
             <th class="amt">Amt Spent</th>
-            <th class="amt">Remaining</th>
+            <th class="amt">Balance</th>
             <th class="amt">Target Spent by Now</th>
             <th class="pacing-col">Pacing</th>
             <th class="amt">Weekly Spend Remaining</th>
@@ -126,7 +126,7 @@ HTML_TMPL = """<!doctype html>
             <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
             <th class="amt">Amt Spent</th>
-            <th class="amt">Remaining</th>
+            <th class="amt">Balance</th>
           </tr>
         </thead>
         <tbody>
@@ -141,9 +141,6 @@ HTML_TMPL = """<!doctype html>
             <td class="amt">${{ r.budgeted }}</td>
             <td class="amt">${{ r.activity }}</td>
             <td class="amt {{ r.status }}">${{ r.available }}</td>
-            <td class="amt">{% if r.target_spent %}${{ r.target_spent }}{% else %}—{% endif %}</td>
-            <td class="pacing-col {{ r.pacing_class }}">{{ r.pacing }}</td>
-            <td class="amt">{% if r.weekly %}${{ r.weekly }}{% endif %}</td>
           </tr>
           {% endfor %}
           {% endfor %}
@@ -166,7 +163,7 @@ Budget last updated: {{ budget_last_updated_str }}{% if budget_last_updated_ago 
 {% for g in groups_monitored -%}
 == {{ g.name }} ==
 {% for r in g.rows %}
-- {{ r.status_icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %}
+- {{ r.status_icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Balance ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %}
 {% endfor %}
 
 {%- endfor %}
@@ -175,7 +172,7 @@ Budget last updated: {{ budget_last_updated_str }}{% if budget_last_updated_ago 
 {% for g in groups_unmonitored -%}
 == {{ g.name }} ==
 {% for r in g.rows %}
-- {{ r.status_icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Remaining ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %}
+- {{ r.status_icon }} {{ r.name }} — Budgeted ${{ r.budgeted }} | Amt Spent ${{ r.activity }} | Balance ${{ r.available }} | Target {{ r.target_spent if r.target_spent else "—" }} | Pacing {{ r.pacing }}{% if r.weekly %} | Weekly ${{ r.weekly }}{% endif %}
 {% endfor %}
 
 {%- endfor %}

@@ -16,13 +16,13 @@ from app.mailer import send_email
 # ---- Quick config for a first working run ----
 BUDGET_NAME = "2025 Restart"
 WATCHLIST = {
-    "Household Expenses": [
+    "Everyday Expenses": [
         "Groceries",
+        "Eating Out",
         {"name": "Gifts", "monitor": False},
         "Transportation",
         "Misc",
     ],
-    "Quality of Life": ["Eating Out", {"name": "Vacation", "monitor": False}],
     "A's Expenses": [
         {"name": "Amount - A", "monitor": False},
     ],
@@ -30,10 +30,11 @@ WATCHLIST = {
         {"name": "Amount - C", "monitor": False},
     ],
     "Savings": [
-        {"name": "General", "monitor": False},
         {"name": "Inheritance", "monitor": False},
+        {"name": "General", "monitor": False},
+        {"name": "Vacation", "monitor": False},
     ],
-    "Baby": ["Babysitting", "Baby Misc"],
+    "Kids": ["Babysitting", "Kids Misc"],
 }  # ["*"] = all in group; dict entries can set monitor flags
 
 SOFT_WARN_THRESHOLD = Decimal("10.00")
