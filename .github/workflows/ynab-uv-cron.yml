@@ -1,10 +1,11 @@
 name: YNAB Daily Run (uv)
 
 on:
-  schedule:
-    # 07:00 America/Los_Angeles year-round (cron runs in UTC)
-    - cron: "0 14 * 3-11 *"   # Mar–Nov → 14:00 UTC
-    - cron: "0 15 * 1-2,12 *" # Dec–Feb → 15:00 UTC
+  # schedule disabled: turning off cron triggers
+  # schedule:
+  #   # 07:00 America/Los_Angeles year-round (cron runs in UTC)
+  #   - cron: "0 14 * 3-11 *"   # Mar–Nov → 14:00 UTC
+  #   - cron: "0 15 * 1-2,12 *" # Dec–Feb → 15:00 UTC
   workflow_dispatch: {}
 
 concurrency:
