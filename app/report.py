@@ -1,6 +1,7 @@
 from __future__ import annotations
 from decimal import Decimal
 from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Optional
 from jinja2 import Environment, BaseLoader, select_autoescape
 from app.domain import elapsed_fraction
@@ -282,13 +283,16 @@ def render_email_per_category(
     budget_last_updated_str = "—"
     budget_last_updated_ago = ""
     if budget_last_modified is not None:
-        # Normalize to UTC date for consistency
+        # Convert to Pacific Time and include timestamp
         try:
-            mod_dt = budget_last_modified.astimezone(timezone.utc)
+            pt = ZoneInfo("America/Los_Angeles")
+            mod_dt_pt = budget_last_modified.astimezone(pt)
         except Exception:
-            mod_dt = budget_last_modified
-        mod_date = mod_dt.date()
-        budget_last_updated_str = mod_date.isoformat()
+            # Fallback to original value if conversion fails
+            mod_dt_pt = budget_last_modified
+        mod_date = mod_dt_pt.date()
+        # Example: 2025-06-12 14:37 PDT
+        budget_last_updated_str = mod_dt_pt.strftime("%Y-%m-%d %H:%M %Z")
         days_ago = max(0, (today - mod_date).days)
         # Always show numeric "N days ago" as requested
         unit = "day" if abs(days_ago) == 1 else "days"

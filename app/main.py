@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 from pathlib import Path
 
@@ -56,7 +57,9 @@ def main():
         selected = select_categories(all_cats, WATCHLIST)
         monitor_map = build_monitor_map(all_cats, WATCHLIST)
 
-        today = date.today()
+        # Use Pacific Time for all date-based logic and display
+        pt = ZoneInfo("America/Los_Angeles")
+        today = datetime.now(pt).date()
         rows = per_category_weekly_breakdown(
             selected,
             today,
