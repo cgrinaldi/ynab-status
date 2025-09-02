@@ -124,7 +124,6 @@ HTML_TMPL = """<!doctype html>
           <tr>
             <th class="group-col">Group</th>
             <th class="cat-col">Category</th>
-            <th class="status-col">Status</th>
             <th class="amt">Budgeted</th>
             <th class="amt">Amt Spent</th>
             <th class="amt">Balance</th>
@@ -138,7 +137,6 @@ HTML_TMPL = """<!doctype html>
             <td class="group-col" rowspan="{{ g.rows|length }}"><strong>{{ g.name }}</strong></td>
             {% endif %}
             <td class="cat-col"><strong>{{ r.name }}</strong></td>
-            <td class="status-col"><span class="tag {{ r.status_class }}">{{ r.status_icon }}</span></td>
             <td class="amt">${{ r.budgeted }}</td>
             <td class="amt">${{ r.activity }}</td>
             <td class="amt {{ r.status }}">${{ r.available }}</td>
