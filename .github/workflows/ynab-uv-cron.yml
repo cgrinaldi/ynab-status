@@ -1,11 +1,10 @@
 name: YNAB Daily Run (uv)
 
 on:
-  # schedule disabled: turning off cron triggers
-  # schedule:
-  #   # 07:00 America/Los_Angeles year-round (cron runs in UTC)
-  #   - cron: "0 14 * 3-11 *"   # Mar–Nov → 14:00 UTC
-  #   - cron: "0 15 * 1-2,12 *" # Dec–Feb → 15:00 UTC
+  schedule:
+    # 07:00 America/Los_Angeles year-round (cron runs in UTC)
+    - cron: "0 14 * 3-11 *"   # Mar–Nov → 14:00 UTC
+    - cron: "0 15 * 1-2,12 *" # Dec–Feb → 15:00 UTC
   workflow_dispatch: {}
 
 concurrency:
@@ -52,6 +51,16 @@ jobs:
         # --frozen + --locked refuse resolution changes; fails if lock/env mismatch
         run: uv sync --frozen
 
+      - name: Restore app state (last email sent)
+        id: restore-state
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          # Restore the most recent state regardless of exact key
+          key: app-state-${{ hashFiles('.state/email_state.json') }}
+          restore-keys: |
+            app-state-
+
       - name: Write Gmail OAuth files
         env:
           GMAIL_CREDENTIALS_JSON: ${{ secrets.GMAIL_CREDENTIALS_JSON }}
@@ -76,3 +85,11 @@ jobs:
 
           # add any additional config your app expects
         run: uv run -m app.main
+
+      - name: Save app state if changed
+        # Save only when the state file exists and its hash differs from the restored key
+        if: ${{ hashFiles('.state/email_state.json') != '' && steps.restore-state.outputs.cache-matched-key != format('app-state-{0}', hashFiles('.state/email_state.json')) }}
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: app-state-${{ hashFiles('.state/email_state.json') }}
