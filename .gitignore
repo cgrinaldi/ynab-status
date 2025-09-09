@@ -1,6 +1,7 @@
 credentials.json
 token.json
 out/
+.state/
 .DS_Store
 
 # Byte-compiled / optimized / DLL files

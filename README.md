@@ -11,12 +11,14 @@ This repo uses uv + pyproject.toml for dependency management and includes a GitH
 - Clear status icons and color coding for negative balances and pacing
 - HTML and plain text email output (also written to `out/` for inspection)
 - Gmail API integration (OAuth) for sending mail
+  - Alternatively: SMTP with Gmail App Password (no OAuth token refresh)
 
 ## Requirements
 
 - Python `>= 3.11`
 - A YNAB Personal Access Token (API key)
 - Gmail OAuth credentials (`credentials.json` and a generated `token.json`)
+  - Or enable SMTP with a Gmail App Password (no OAuth files needed)
 - Recommended: `uv` for managing and running the project
 
 ## Quick Start
@@ -40,6 +42,7 @@ This repo uses uv + pyproject.toml for dependency management and includes a GitH
      ```
 
    - Place your Gmail OAuth client file as `credentials.json` in the repo root. The first run will perform a browser OAuth flow and write `token.json` next to it.
+   - Alternate: if you set `GMAIL_APP_PASSWORD` in your environment, the app will send via Gmail SMTP and skip OAuth entirely.
 
 4) Run locally
 
@@ -70,6 +73,10 @@ Environment variables are loaded via Pydantic Settings from `.env` (see `app/con
 - `YNAB_API_KEY` — Your YNAB API key
 - `GOOGLE_OAUTH_CLIENT_ID` — Your OAuth client ID (used by Google libs)
 
+Optional for SMTP (alternate transport):
+
+- `GMAIL_APP_PASSWORD` — App Password for the sender Gmail account (2FA required)
+
 Gmail credentials are provided via files expected by `app/mailer.py`:
 
 - `credentials.json` — OAuth client credentials
@@ -91,8 +98,11 @@ A workflow is provided at `.github/workflows/ynab-uv-cron.yml`.
 - Secrets you need to set in your repository settings:
   - `YNAB_API_KEY`
   - `GOOGLE_OAUTH_CLIENT_ID`
-  - `GMAIL_CREDENTIALS_JSON` — Contents of your `credentials.json`
-  - `GMAIL_TOKEN_JSON` — Contents of a working `token.json`
+  - If using Gmail API (OAuth):
+    - `GMAIL_CREDENTIALS_JSON` — Contents of your `credentials.json`
+    - `GMAIL_TOKEN_JSON` — Contents of a working `token.json`
+  - If using SMTP (App Password):
+    - `GMAIL_APP_PASSWORD` — App Password for the `SENDER` account (see below)
 - The schedule section is currently commented out. You can re-enable and adjust it for your timezone.
 - The job uses `uv sync --frozen` and runs `uv run -m app.main`.
 
@@ -112,6 +122,7 @@ Dependencies are declared in `pyproject.toml`; a `uv.lock` is present for reprod
 ## Troubleshooting
 
 - Gmail auth keeps prompting: delete `token.json` and re-run to regenerate it.
+- Want to avoid token refresh? Enable SMTP by creating a Gmail App Password (Google Account → Security → App passwords), set it as `GMAIL_APP_PASSWORD` secret, and remove the OAuth-secret steps in the workflow.
 - No categories found: check `BUDGET_NAME` and ensure group/category names in `WATCHLIST` match your YNAB exactly.
 - Timeouts with YNAB: ensure `YNAB_API_KEY` is correct and network access is available.
 - Emails not received: check the Gmail account’s Sent folder and spam; verify `SENDER` and `RECIPIENTS`.
