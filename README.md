@@ -1,6 +1,6 @@
 # ynab-status
 
-Daily email status report for YNAB categories. It pulls your YNAB budget data, computes per-category pacing and weekly allowance, renders a clean HTML/text email, and sends it via Gmail.
+Daily email status report for [YNAB categories](https://www.ynab.com/features). It pulls your YNAB budget data, computes per-category pacing and weekly allowance, renders a clean HTML/text email, and sends it via Gmail.
 
 This repo uses uv + pyproject.toml for dependency management and includes a GitHub Actions workflow for automated runs.
 
